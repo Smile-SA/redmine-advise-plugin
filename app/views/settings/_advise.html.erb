@@ -1,0 +1,15 @@
+<div>
+    <h2>General</h2>
+    <div>
+        <span style="display: inline-block; min-width: 200px">advise server url:</span>
+        <input value="<%= settings['url'] %>" name="settings[url]">
+    </div>
+    <div>
+        <span style="display: inline-block; min-width: 200px">Advise confidence treshold:</span>
+        <input value="<%= settings['treshold'] %>" name="settings[treshold]" type="number" step="0.01">
+    </div>
+    <div>
+        <span style="display: inline-block; min-width: 200px">Max issue returned:</span>
+        <input value="<%= settings['count'] %>" name="settings[count]" type="number">
+    </div>
+</div>
