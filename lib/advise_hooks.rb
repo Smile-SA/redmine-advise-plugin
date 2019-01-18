@@ -22,30 +22,32 @@ class AdviseHooks < Redmine::Hook::ViewListener
             
             if(response["closest"])
                 notes = "-- Redmine Advise --\n"
-                notes << "Ticket le plus ressemblant: "
-                notes << toLink(response["closest"])
-                notes << "\n"
-                notes << "Tickets les proches du même projet: "
-                notes << (response["project_closests"].map {|x| toLink(x)}).join(" ")
-
+                notes << "Ticket le plus ressemblant:\n"
+                notes << "@ id | autheur | commun% | date | titre @ \n"
+                notes << toDetails(response["closest"])
+                notes << "Tickets les proches du même projet:\n"
+                notes << "@ id | autheur | commun% | date | titre @ \n"
+                notes << (response["project_closests"].map {|x| toDetails(x)}).join("")
+                
                 j = Journal.new(
                     :journalized => Issue.find(context[:issue][:id]),
                     :user => User.anonymous,
                     :notes => notes,
                     :details => [JournalDetail.new(:property => 'relation', :prop_key => 'relates')])
+
                 j.save()
             end
             
-        rescue => exception
-            print exception
+        rescue Exception => e
+            Rails.logger.error "ADVISE_PLUGIN ERROR: #{e}"
         end
     end
 
     def post(url, body)
-        uri = URI(url)
+        uri = URI.parse(URI.encode(url))
         request = Net::HTTP::Post.new(uri, 'Content-Type' => 'application/json')
         request.body = body
-
+        
         response = Net::HTTP.start(uri.host, uri.port, 
             :use_ssl => uri.scheme == 'https', 
             :open_timeout => 2, 
@@ -57,7 +59,15 @@ class AdviseHooks < Redmine::Hook::ViewListener
         return JSON.parse(response.body)
     end
 
-    def toLink(ticketId)
-        return "#" + ticketId.to_s
+    def toDetails(advise)
+        begin
+            ticket = Issue.find(advise["id"])
+            correlation = (100 * (1 - advise["distance"])).round
+            username = User.find(ticket[:author_id]).to_s || 'anonymous'
+        
+            return "#" + advise["id"].to_s + " @  | " + username + " | " + correlation.to_s + " | " + ticket[:start_date].to_s + " | " + ticket[:subject].to_s + " @ \n"
+        rescue
+            return "#" + advise["id"].to_s + "\n"
+        end
     end
 end
