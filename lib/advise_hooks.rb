@@ -3,6 +3,10 @@ require 'net/http'
 require 'json'
 
 class AdviseHooks < Redmine::Hook::ViewListener
+    def view_layouts_base_html_head(context)
+        stylesheet_link_tag 'endline.css', :plugin => 'advise'
+    end
+    
     def controller_issues_new_after_save(context)
         begin
             if !Project.find(context[:issue][:project_id]).enabled_module('advise')
@@ -23,10 +27,10 @@ class AdviseHooks < Redmine::Hook::ViewListener
             if(response["closest"])
                 notes = "-- Redmine Advise --\n"
                 notes << "Ticket le plus ressemblant:\n"
-                notes << "@ id | autheur | commun% | date | titre @ \n"
+                notes << "id | autheur | commun% | date | titre \n"
                 notes << toDetails(response["closest"])
                 notes << "Tickets les proches du même projet:\n"
-                notes << "@ id | autheur | commun% | date | titre @ \n"
+                notes << "id | autheur | commun% | date | titre \n"
                 notes << (response["project_closests"].map {|x| toDetails(x)}).join("")
                 
                 j = Journal.new(
@@ -65,7 +69,7 @@ class AdviseHooks < Redmine::Hook::ViewListener
             correlation = (100 * (1 - advise["distance"])).round
             username = User.find(ticket[:author_id]).to_s || 'anonymous'
         
-            return "#" + advise["id"].to_s + " @  | " + username + " | " + correlation.to_s + " | " + ticket[:start_date].to_s + " | " + ticket[:subject].to_s + " @ \n"
+            return "#" + advise["id"].to_s + "  | " + username + " | " + correlation.to_s + " | " + ticket[:start_date].to_s + " | " + ticket[:subject].to_s + " \n"
         rescue
             return "#" + advise["id"].to_s + "\n"
         end
