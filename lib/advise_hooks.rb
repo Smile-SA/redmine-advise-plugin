@@ -12,6 +12,17 @@ class AdviseHooks < Redmine::Hook::ViewListener
             if !Project.find(context[:issue][:project_id]).enabled_module('advise')
                 return nil
             end
+
+            user = User.find_by_login("tma_advisor")
+            if !user
+                user = User.new(
+                    :login => "tma_advisor", 
+                    :firstname => "TMA", 
+                    :lastname => "Advisor", 
+                    :generate_password => true,
+                    :mail => "tma-advisor@alterway.fr")
+                user.save()
+            end
             
             response = post(
                 Setting.plugin_advise['url'],
@@ -26,19 +37,19 @@ class AdviseHooks < Redmine::Hook::ViewListener
             
             if(response["closest"])
                 notes = "-- Redmine Advise --\n"
-                notes << "Ticket le plus ressemblant:\n"
+                notes << "\nTicket le plus ressemblant:\n"
                 notes << "id | autheur | commun% | date | titre \n"
                 notes << toDetails(response["closest"])
-                notes << "Tickets les proches du même projet:\n"
+                notes << "\nTickets les proches du même projet:\n"
                 notes << "id | autheur | commun% | date | titre \n"
                 notes << (response["project_closests"].map {|x| toDetails(x)}).join("")
                 
                 j = Journal.new(
                     :journalized => Issue.find(context[:issue][:id]),
-                    :user => User.anonymous,
+                    :user => user,
                     :notes => notes,
+                    :private_notes => true,
                     :details => [JournalDetail.new(:property => 'relation', :prop_key => 'relates')])
-
                 j.save()
             end
             
@@ -71,7 +82,8 @@ class AdviseHooks < Redmine::Hook::ViewListener
         
             return "#" + advise["id"].to_s + "  | " + username + " | " + correlation.to_s + " | " + ticket[:start_date].to_s + " | " + ticket[:subject].to_s + " \n"
         rescue
-            return "#" + advise["id"].to_s + "\n"
+            Rails.logger.error "ADVISE_PLUGIN WARN: could'nt find issue ##{advise["id"].to_s}"
+            return ""
         end
     end
 end
