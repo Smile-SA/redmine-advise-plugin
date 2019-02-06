@@ -13,17 +13,10 @@ class AdviseHooks < Redmine::Hook::ViewListener
                 return nil
             end
 
-            user = User.find_by_login("tma_advisor")
-            if !user
-                user = User.new(
-                    :login => "tma_advisor", 
-                    :firstname => "TMA", 
-                    :lastname => "Advisor", 
-                    :generate_password => true,
-                    :mail => "tma-advisor@alterway.fr")
-                user.save()
+            if Setting.plugin_advise['advise_user_mail']
+                user = User.find_by_mail(Setting.plugin_advise['advise_user_mail'])
             end
-            
+
             response = post(
                 Setting.plugin_advise['url'],
                 JSON.generate({
