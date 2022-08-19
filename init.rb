@@ -3,7 +3,7 @@ require_dependency 'advise_hooks'
 
 Redmine::Plugin.register :advise do
   name 'Advise plugin'
-  author 'Damien GILLES'
+  author 'Smile R&D'
   description "Find the closest related tickets"
   version '0.1'
   settings partial: 'settings/advise', default: {}
